@@ -99,6 +99,62 @@ class ActiveUserData(object):
         return self.amount
 
 
+class OMMAnalyticsData(object):
+    def __init__(self, starting_timestamp: int, ending_timestamp: int):
+        self.start_timestamp = starting_timestamp
+        self.end_timestamp = ending_timestamp
+        self.data = {
+            "Deposit": [],
+            "Redeem": [],
+            "Repay": [],
+            "Borrow": []
+        }
+
+    @retry(Exception, tries=20, delay=1, back_off=2)
+    def _get_log_request(self, skip, method, score):
+        payload = {"skip": skip, "method": method, "limit": 100, "score_address": score}
+        req = requests.get(GEOMETRY_LOG_API, params=payload)
+        return json.loads(req.text)
+
+    def _fetch_data(self, skip, method):
+        _data = self._get_log_request(skip, method, ADDRESS["LENDING_POOL"])
+        logger.info(f"....{skip}....{method}")
+        for row in _data:
+            block_timestamp = int(row.get("block_timestamp"))
+            self.threshold_reached = self.start_timestamp >= block_timestamp
+            if (not self.threshold_reached) and (block_timestamp <= self.end_timestamp):
+                method = row.get("method")
+                indexed = json.loads(row.get("indexed"))
+                if method == "RedeemUnderlying":
+                    self.data["Redeem"].append({
+                        "block_time": block_timestamp,
+                        "reserve": TOKENS[indexed[1]],
+                        "address": indexed[2],
+                        "amount": indexed[3],
+                    })
+                else:
+                    self.data[method].append({
+                        "block_time": block_timestamp,
+                        "reserve": TOKENS[indexed[1]],
+                        "address": indexed[2],
+                        "amount": indexed[3],
+                    })
+
+        if not self.threshold_reached:
+            self._fetch_data(skip + 100, method)
+        else:
+            logger.info(f"threshold reached at {skip}")
+
+    def fetch(self):
+        self._fetch_data(0, "Deposit")
+        self._fetch_data(0, "Borrow")
+        self._fetch_data(0, "RedeemUnderlying")
+        self._fetch_data(0, "Repay")
+
+    def get_data(self):
+        return self.data
+
+
 class OMMAnalytics(object):
     def __init__(self, index: int, starting_timestamp: int, ending_timestamp: int):
         self.index = index
@@ -108,37 +164,20 @@ class OMMAnalytics(object):
         self.data = ActiveUserData()
         self.summary = {}
 
-    @retry(Exception, tries=20, delay=1, back_off=2)
-    def _get_log_request(self, skip, method, score):
-        payload = {"skip": skip, "method": method, "limit": 100, "score_address": score}
-        req = requests.get(GEOMETRY_LOG_API, params=payload)
-        return json.loads(req.text)
-
-    def _fetch_users(self, skip, method):
-        _data = self._get_log_request(skip, method, ADDRESS["LENDING_POOL"])
-        logger.info(f"....{skip}....{method}")
-        for row in _data:
-            block_timestamp = int(row.get("block_timestamp"))
+    def _process_data(self, method, _data):
+        logger.info(f"....processing omm reserve data {self.index}")
+        for row in _data[method]:
+            block_timestamp = row.get("block_time")
             self.threshold_reached = self.start_timestamp >= block_timestamp
             if (not self.threshold_reached) and (block_timestamp <= self.end_timestamp):
                 self.timestamp = block_timestamp
-                method = row.get("method")
-                indexed = json.loads(row.get("indexed"))
-                if method == "RedeemUnderlying":
-                    self.data.add("Redeem", TOKENS[indexed[1]], indexed[2], indexed[3])
-                else:
-                    self.data.add(method, TOKENS[indexed[1]], indexed[2], indexed[3])
+                self.data.add(method, row.get("reserve"), row.get("address"), row.get("amount"))
 
-        if not self.threshold_reached:
-            self._fetch_users(skip + 100, method)
-        else:
-            logger.info(f"threshold reached at {skip}")
-
-    def fetch(self):
-        self._fetch_users(0, "Deposit")
-        self._fetch_users(0, "Borrow")
-        self._fetch_users(0, "RedeemUnderlying")
-        self._fetch_users(0, "Repay")
+    def process(self, data):
+        self._process_data("Borrow", data)
+        self._process_data("Repay", data)
+        self._process_data("Redeem", data)
+        self._process_data("Deposit", data)
 
     def _save_reserve_txns(self, timestamp: int):
         summary, count, info = self.data.getSummary()
@@ -233,16 +272,19 @@ if __name__ == "__main__":
         # prev_timestamp = 1641297625_000_000 // US_PER_HR * US_PER_HR
         # current_timestamp = 1641304819_000_000
 
-        ts = current_timestamp // US_PER_HR * US_PER_HR
+        ts = (current_timestamp // US_PER_HR - 1) * US_PER_HR
+        data_fetcher = OMMAnalyticsData(prev_timestamp, current_timestamp)
+        data_fetcher.fetch()
+        data = data_fetcher.get_data()
         for i in range(prev_timestamp, current_timestamp, US_PER_HR):
             index = i // US_PER_HR
             starting_timestamp = i
             ending_timestamp = i + US_PER_HR
             analytics = OMMAnalytics(index, starting_timestamp, ending_timestamp)
-            analytics.fetch()
+            analytics.process(data)
             analytics.save()
 
-        _val = (analytics.timestamp, KEY,)
+        _val = (ts, KEY,)
         logger.info("...Updating last update timestamp...")
         with connection.cursor() as cursor:
             cursor.execute(SQL_UPDATE_PREV_TIMESTAMP, _val)

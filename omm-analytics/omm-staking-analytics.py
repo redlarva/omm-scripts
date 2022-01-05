@@ -64,15 +64,11 @@ class ActiveUserData(object):
         }
 
 
-class OMMAnalytics(object):
-    def __init__(self, index: int, starting_timestamp: int, ending_timestamp: int):
-        self.index = index
+class OMMAnalyticsData(object):
+    def __init__(self, starting_timestamp: int, ending_timestamp: int):
         self.start_timestamp = starting_timestamp
         self.end_timestamp = ending_timestamp
-        self.data = ActiveUserData()
-        self.summary = {}
-        self.block_timestamp = ending_timestamp
-        self.threshold_reached = False
+        self.data = [];
 
     @retry(Exception, tries=20, delay=1, back_off=2)
     def _get_log_request(self, skip, method, score):
@@ -81,7 +77,7 @@ class OMMAnalytics(object):
         return json.loads(req.text)
 
     @retry(Exception, tries=20, delay=1, back_off=2)
-    def _add(self, transaction_hash):
+    def _add(self, block_timestamp, transaction_hash):
         try:
             req = requests.get(f"{GEOMETRY_TRANSACTION_DETAIL_API}{transaction_hash}")
             tx_detail = json.loads(req.text)
@@ -89,7 +85,9 @@ class OMMAnalytics(object):
             method = tx_detail.get("method")
             address = tx_detail.get("from_address")
             amount = int(_data.get("params").get("_value"), 16) / EXA
-            self.data.add(method, address, amount)
+            self.data.append({
+                "method": method, "address": address, "amount": amount, "block_timestamp": block_timestamp
+            })
         except Exception as e:
             print(e)
             raise e
@@ -102,8 +100,7 @@ class OMMAnalytics(object):
             transaction_hash = row.get("transaction_hash")
             self.threshold_reached = block_timestamp <= self.start_timestamp
             if not self.threshold_reached and block_timestamp <= self.end_timestamp:
-                self._add(transaction_hash)
-                self.block_timestamp = block_timestamp
+                self._add(block_timestamp, transaction_hash)
 
         if not self.threshold_reached:
             self._fetch(skip + 100)
@@ -112,6 +109,27 @@ class OMMAnalytics(object):
 
     def fetch(self):
         self._fetch(0)
+
+    def get_data(self):
+        return self.data
+
+
+class OMMAnalytics(object):
+    def __init__(self, index: int, starting_timestamp: int, ending_timestamp: int):
+        self.index = index
+        self.start_timestamp = starting_timestamp
+        self.end_timestamp = ending_timestamp
+        self.data = ActiveUserData()
+        self.summary = {}
+        self.threshold_reached = False
+
+    def process(self, _data):
+        logger.info(f"....processing omm stake/unstake data {self.index}")
+        for row in _data:
+            block_timestamp = row.get("block_timestamp")
+            self.threshold_reached = block_timestamp <= self.start_timestamp
+            if not self.threshold_reached and block_timestamp <= self.end_timestamp:
+                self.data.add(row.get("method"), row.get("address"), row.get("amount"))
 
     def _save_stake_unstake(self, timestamp: int):
         self.summary['omm'] = self.data.getSummary()
@@ -155,16 +173,19 @@ if __name__ == "__main__":
         current_timestamp = 1641304819_000_000
         """
 
-        ts = current_timestamp // US_PER_HR * US_PER_HR
+        ts = (current_timestamp // US_PER_HR - 1) * US_PER_HR
+        data_fetcher = OMMAnalyticsData(prev_timestamp, current_timestamp)
+        data_fetcher.fetch()
+        data = data_fetcher.get_data()
         for i in range(prev_timestamp, current_timestamp, US_PER_HR):
             index = i // US_PER_HR
             starting_timestamp = i
             ending_timestamp = i + US_PER_HR
             analytics = OMMAnalytics(index, starting_timestamp, ending_timestamp)
-            analytics.fetch()
+            analytics.process(data)
             analytics.save()
 
-        _val = (analytics.block_timestamp, KEY,)
+        _val = (ts, KEY,)
         logger.info('...Updating last update timestamp...')
         with connection.cursor() as cursor:
             cursor.execute(SQL_UPDATE_PREV_TIMESTAMP, _val)
