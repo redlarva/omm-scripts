@@ -30,7 +30,7 @@ create table reserve_amount
     borrow    float null,
     repay     float null,
     redeem    float null,
-    reserve   int   not null,
+    reserve   varchar(20)   not null,
     primary key (_index, reserve)
 );
 
@@ -43,7 +43,7 @@ create table reserve_stats
     repay          int null,
     redeem         int null,
     unique_address int null,
-    reserve        int not null,
+    reserve        varchar(20) not null,
     primary key (_index, reserve)
 );
 
@@ -55,6 +55,6 @@ create table timestamp_history
 );
 
 insert into timestamp_history ("_key", "timestamp")
-values ("OMM", 1638316800000),
-       ("RESERVE", 1638316800000);
+values ("OMM", 1638316800000000),
+       ("RESERVE", 1638316800000000);
 
