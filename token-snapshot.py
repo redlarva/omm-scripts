@@ -77,13 +77,14 @@ class TokenSnapshot(object):
             self.wallets.extend(deposit_wallets)
             index += 1
             batch_size = len(deposit_wallets)
+        deposit_wallets = self._call_tx(self.addresses['LENDING_POOL'], 'getDepositWallets', {'_index': index})
+        self.wallets.extend(deposit_wallets)
 
     def snapshot(self, _token):
         self.token = _token
         with concurrent.futures.ThreadPoolExecutor(max_workers=min(32, os.cpu_count() + 20)) as executor:
             executor.map(self._get_balances, self.wallets)
         _data = self._get_data()
-        print(_data)
         _sum = 0
         for item in _data:
             print(item['balance'])

@@ -1,1 +1,1 @@
-# omm-scirpts
+# omm-scripts
