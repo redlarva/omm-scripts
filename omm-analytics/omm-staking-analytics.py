@@ -11,7 +11,7 @@ KEY = "OMM"
 # cursor = mydb.cursor()
 
 SQL_INSERT_OMM_STAKE = (
-    "INSERT INTO omm_staking_count"
+    "INSERT INTO omm_staking_stats"
     "(staking, unstaking,cancelUnstaking, timestamp, _index)"
     "VALUES (%s, %s,  %s,%s, %s) ON DUPLICATE KEY UPDATE staking=%s, unstaking=%s, cancelUnstaking=%s"
 )

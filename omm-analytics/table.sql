@@ -1,30 +1,56 @@
-CREATE TABLE `omm_staking_amount`
+create
+    database omm_analytics;
+use
+    omm_analytics;
+create table omm_staking_amount
 (
-    `staking`         float   DEFAULT NULL,
-    `unstaking`       float   DEFAULT NULL,
-    `cancelUnstaking` float   DEFAULT NULL,
-    `timestamp`       int(11) DEFAULT NULL,
-    `_index`          int(11) NOT NULL,
-    PRIMARY KEY (`_index`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
+    staking         float null,
+    unstaking       float null,
+    cancelUnstaking float null,
+    timestamp       int   null,
+    _index          int   not null
+        primary key
+);
 
-CREATE TABLE `omm_staking_count`
+create table omm_staking_stats
 (
-    `staking`         int(11) DEFAULT NULL,
-    `unstaking`       int(11) DEFAULT NULL,
-    `cancelUnstaking` int(11) DEFAULT NULL,
-    `timestamp`       int(11) DEFAULT NULL,
-    `_index`          int(11) NOT NULL,
-    PRIMARY KEY (`_index`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
+    staking         int null,
+    unstaking       int null,
+    cancelUnstaking int null,
+    timestamp       int null,
+    _index          int not null
+        primary key
+);
 
-CREATE TABLE `timestamp_history`
+create table reserve_amount
 (
-    `_key`      varchar(10) NOT NULL,
-    `timestamp` bigint(20) DEFAULT NULL,
-    PRIMARY KEY (`_key`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
+    _index    int   not null,
+    timestamp int   null,
+    deposit   float null,
+    borrow    float null,
+    repay     float null,
+    redeem    float null,
+    reserve   int   not null,
+    primary key (_index, reserve)
+);
+
+create table reserve_stats
+(
+    _index         int not null,
+    timestamp      int null,
+    deposit        int null,
+    borrow         int null,
+    repay          int null,
+    redeem         int null,
+    unique_address int null,
+    reserve        int not null,
+    primary key (_index, reserve)
+);
+
+create table timestamp_history
+(
+    _key      varchar(10) not null
+        primary key,
+    timestamp bigint      null
+);
 
