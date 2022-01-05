@@ -3,6 +3,13 @@
 ##------------------##
 
 
+def bytes_to_str(_byte):
+    _byte = _byte[2:]
+    _str = ""
+    for i in range(0, len(_byte) - 1, 2):
+        x = str(_byte[i]) + str(_byte[i + 1])
+        _str += chr(int(x, 16))
+    return _str
 
 
 def get_unique_count(_dict):
