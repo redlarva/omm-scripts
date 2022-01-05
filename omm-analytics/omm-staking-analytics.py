@@ -5,7 +5,7 @@ from datetime import datetime
 
 from helpers.constants import ADDRESS, GEOMETRY_LOG_API, US_PER_HR, GEOMETRY_TRANSACTION_DETAIL_API, EXA
 from helpers.logger import logger
-from helpers.mysql import connection
+from helpers.mysql import connection,get_prev_timestamp
 
 KEY = "OMM"
 # cursor = mydb.cursor()
@@ -144,16 +144,11 @@ class OMMAnalytics(object):
             json.dump(self.summary, outfile)
 
 
-def _get_prev_timestamp() -> int:
-    with connection.cursor() as cursor:
-        cursor.execute("select `timestamp` from timestamp_history where _key=%s", (KEY,))
-        value = cursor.fetchone()
-        return value['_timestamp'];
 
 
 if __name__ == "__main__":
     with connection:
-        prev_timestamp = _get_prev_timestamp() // US_PER_HR * US_PER_HR
+        prev_timestamp = get_prev_timestamp(KEY) // US_PER_HR * US_PER_HR
         current_timestamp = int(datetime.timestamp(datetime.now()) * 1_000_000)
         """
         # to get data between timestamps

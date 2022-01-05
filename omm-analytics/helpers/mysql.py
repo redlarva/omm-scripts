@@ -16,3 +16,10 @@ connection = pymysql.connect(host=HOST,
 # mydb = mysql.connector.connect(
 #     host=HOST, user=USER, password=PASSWORD, database=DATABASE
 # )
+
+
+def get_prev_timestamp(key) -> int:
+    with connection.cursor() as cursor:
+        cursor.execute("select `timestamp` from timestamp_history where _key=%s", (key,))
+        value = cursor.fetchone()
+        return value['timestamp'];

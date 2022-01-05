@@ -5,7 +5,7 @@ from datetime import datetime
 
 from helpers.constants import ADDRESS, GEOMETRY_LOG_API, US_PER_HR, TOKENS
 from helpers.logger import logger
-from helpers.mysql import connection
+from helpers.mysql import connection, get_prev_timestamp
 from helpers.utils import get_unique_count, get_total_count, zero_if_none
 
 KEY = 'RESERVE'
@@ -31,9 +31,9 @@ class ActiveUserData(object):
     def __init__(self):
         super(ActiveUserData, self).__init__()
         self.data = {
-            "deposit": {"sicx": [],"usds": [],"iusdc": [],"bnusd": [],"baln": [],"omm": []},
+            "deposit": {"sicx": [], "usds": [], "iusdc": [], "bnusd": [], "baln": [], "omm": []},
             "borrow": {"sicx": [], "usds": [], "iusdc": [], "bnusd": [], "baln": []},
-            "redeem": {"sicx": [],"usds": [],"iusdc": [],"bnusd": [],"baln": [],"omm": []},
+            "redeem": {"sicx": [], "usds": [], "iusdc": [], "bnusd": [], "baln": [], "omm": []},
             "repay": {"sicx": [], "usds": [], "iusdc": [], "bnusd": [], "baln": []},
         }
 
@@ -67,7 +67,7 @@ class ActiveUserData(object):
         summary = {}
 
         info = {"omm": {}, "baln": {}, "sicx": {}, "usds": {}, "iusdc": {}, "bnusd": {}}
-        count = {"omm": {},"baln": {},"sicx": {},"usds": {},"iusdc": {},"bnusd": {}}
+        count = {"omm": {}, "baln": {}, "sicx": {}, "usds": {}, "iusdc": {}, "bnusd": {}}
 
         for method, values in txns.items():
             for token, addresses in values.items():
@@ -223,15 +223,10 @@ class OMMAnalytics(object):
     def getAmountSummary(self):
         return self.data.getAmountSummary()
 
-def _get_prev_timestamp() -> int:
-    with connection.cursor() as cursor:
-        cursor.execute("select `timestamp` from timestamp_history where _key=%s", (KEY,))
-        value = cursor.fetchone()
-        return value['timestamp'];
 
 if __name__ == "__main__":
     with connection:
-        prev_timestamp = _get_prev_timestamp() // US_PER_HR * US_PER_HR
+        prev_timestamp = get_prev_timestamp(KEY) // US_PER_HR * US_PER_HR
         current_timestamp = int(datetime.timestamp(datetime.now()) * 1_000_000)
 
         # # to get data between timestamps
@@ -247,7 +242,7 @@ if __name__ == "__main__":
             analytics.fetch()
             analytics.save()
 
-        _val = (analytics.timestamp, KEY, )
+        _val = (analytics.timestamp, KEY,)
         logger.info("...Updating last update timestamp...")
         with connection.cursor() as cursor:
             cursor.execute(SQL_UPDATE_PREV_TIMESTAMP, _val)
