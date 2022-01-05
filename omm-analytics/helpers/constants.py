@@ -1,3 +1,7 @@
+from dotenv import dotenv_values
+
+config = dotenv_values(".env")
+JSON_FILE_LOCATION = config.get("JSON_FILE_LOCATION")
 
 ADDRESS = {
     'LENDING_POOL': 'cxcb455f26a2c01c686fa7f30e1e3661642dd53c0d',
@@ -14,6 +18,6 @@ TOKENS = {
 }
 # microseconds per hour
 US_PER_HR = 3600_000_000
-EXA=10**18
+EXA = 10 ** 18
 GEOMETRY_LOG_API = 'https://tracker.icon.community/api/v1/logs'
 GEOMETRY_TRANSACTION_DETAIL_API = 'https://tracker.icon.community/api/v1/transactions/details/'

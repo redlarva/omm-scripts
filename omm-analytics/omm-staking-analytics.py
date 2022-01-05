@@ -3,9 +3,10 @@ import requests
 from checkscore.repeater import retry
 from datetime import datetime
 
-from helpers.constants import ADDRESS, GEOMETRY_LOG_API, US_PER_HR, GEOMETRY_TRANSACTION_DETAIL_API, EXA
+from helpers.constants import ADDRESS, GEOMETRY_LOG_API, US_PER_HR, GEOMETRY_TRANSACTION_DETAIL_API, EXA, \
+    JSON_FILE_LOCATION
 from helpers.logger import logger
-from helpers.mysql import connection,get_prev_timestamp
+from helpers.mysql import connection, get_prev_timestamp
 
 KEY = "OMM"
 # cursor = mydb.cursor()
@@ -139,11 +140,9 @@ class OMMAnalytics(object):
         timestamp = self.end_timestamp // 1_000_000
         self._save_stake_unstake(timestamp)
 
-        with open(f'{timestamp}_users_info.json', 'w') as outfile:
+        with open(f'{JSON_FILE_LOCATION}/{timestamp}-omm-staking.json', 'w') as outfile:
             logger.info('... Saving users info json ...')
             json.dump(self.summary, outfile)
-
-
 
 
 if __name__ == "__main__":
