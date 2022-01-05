@@ -1,12 +1,12 @@
 import json
 import requests
-from pprint import pprint
 from checkscore.repeater import retry
 from datetime import datetime
-from helpers.utils import get_unique_count, get_total_count, zero_if_none
-from helpers.constants import ADDRESS, GEOMETRY_LOG_API, US_PER_HR, GEOMETRY_TRANSACTION_DETAIL_API, EXA, TOKENS
+
+from helpers.constants import ADDRESS, GEOMETRY_LOG_API, US_PER_HR, TOKENS
 from helpers.logger import logger
 from helpers.mysql import connection
+from helpers.utils import get_unique_count, get_total_count, zero_if_none
 
 KEY = 'RESERVE'
 

@@ -1,60 +1,66 @@
 create
-    database omm_analytics;
+    database omm_analytics_mainnet;
 use
-    omm_analytics;
-create table omm_staking_amount
+    omm_analytics_mainnet;
+CREATE TABLE `omm_staking_amount`
 (
-    staking         float null,
-    unstaking       float null,
-    cancelUnstaking float null,
-    timestamp       int   null,
-    _index          int   not null
-        primary key
-);
+    `staking`         float   DEFAULT NULL,
+    `unstaking`       float   DEFAULT NULL,
+    `cancelUnstaking` float   DEFAULT NULL,
+    `timestamp`       int(11) DEFAULT NULL,
+    `_index`          int(11) NOT NULL,
+    PRIMARY KEY (`_index`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
 
-create table omm_staking_stats
+CREATE TABLE `omm_staking_stats`
 (
-    staking         int null,
-    unstaking       int null,
-    cancelUnstaking int null,
-    timestamp       int null,
-    _index          int not null
-        primary key
-);
+    `staking`         int(11) DEFAULT NULL,
+    `unstaking`       int(11) DEFAULT NULL,
+    `cancelUnstaking` int(11) DEFAULT NULL,
+    `timestamp`       int(11) DEFAULT NULL,
+    `_index`          int(11) NOT NULL,
+    PRIMARY KEY (`_index`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
 
-create table reserve_amount
+CREATE TABLE `reserve_amount`
 (
-    _index    int   not null,
-    timestamp int   null,
-    deposit   float null,
-    borrow    float null,
-    repay     float null,
-    redeem    float null,
-    reserve   varchar(20)   not null,
-    primary key (_index, reserve)
-);
+    `_index`    int(11)     NOT NULL,
+    `timestamp` int(11) DEFAULT NULL,
+    `deposit`   float   DEFAULT NULL,
+    `borrow`    float   DEFAULT NULL,
+    `repay`     float   DEFAULT NULL,
+    `redeem`    float   DEFAULT NULL,
+    `reserve`   varchar(10) NOT NULL,
+    PRIMARY KEY (`_index`, `reserve`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
 
-create table reserve_stats
+CREATE TABLE `reserve_stats`
 (
-    _index         int not null,
-    timestamp      int null,
-    deposit        int null,
-    borrow         int null,
-    repay          int null,
-    redeem         int null,
-    unique_address int null,
-    reserve        varchar(20) not null,
-    primary key (_index, reserve)
-);
+    `_index`         int(11)     NOT NULL,
+    `timestamp`      int(11) DEFAULT NULL,
+    `deposit`        int(11) DEFAULT NULL,
+    `borrow`         int(11) DEFAULT NULL,
+    `repay`          int(11) DEFAULT NULL,
+    `redeem`         int(11) DEFAULT NULL,
+    `unique_address` int(11) DEFAULT NULL,
+    `reserve`        varchar(10) NOT NULL,
+    PRIMARY KEY (`_index`, `reserve`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
 
-create table timestamp_history
+CREATE TABLE `timestamp_history`
 (
-    _key      varchar(10) not null
-        primary key,
-    timestamp bigint      null
-);
+    `_key`      varchar(10) NOT NULL,
+    `timestamp` bigint(20) DEFAULT NULL,
+    PRIMARY KEY (`_key`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
 
-insert into timestamp_history ("_key", "timestamp")
+
+insert into timestamp_history(`_key`, `timestamp`)
 values ("OMM", 1638316800000000),
        ("RESERVE", 1638316800000000);
 
