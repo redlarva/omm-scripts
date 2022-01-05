@@ -54,3 +54,7 @@ create table timestamp_history
     timestamp bigint      null
 );
 
+insert into timestamp_history ("_key", "timestamp")
+values ("OMM", 1638316800000),
+       ("RESERVE", 1638316800000);
+
