@@ -1,3 +1,4 @@
+#!/home/ubuntu/omm/bin/python
 import json
 import requests
 from checkscore.repeater import retry
