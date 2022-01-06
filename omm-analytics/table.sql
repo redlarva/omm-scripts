@@ -64,3 +64,13 @@ insert into timestamp_history(`_key`, `timestamp`)
 values ("OMM", 1638316800000000),
        ("RESERVE", 1638316800000000);
 
+create table omm_utilization_rates( 
+  `reserve` varchar(20), 
+  `timestamp` int, 
+  `total_borrows` float NOT NULL, 
+  `total_borrows_usd` float NOT NULL, 
+  `total_liquidity` float NOT NULL, 
+  `total_liquidity_usd` float NOT NULL, 
+  `utilization_rate` float NOT NULL, 
+  primary key (`reserve`, `timestamp`) 
+);
