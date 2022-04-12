@@ -76,9 +76,8 @@ class LiquidityProvider(object):
 if __name__ == '__main__':
   args = argumentParser()
   start = args.start
-  START = 0
-  THRESHOLD = START + LIMIT * 100
-  before = time.perf_counter()
-  instance = LiquidityProvider(START, THRESHOLD)
+  threshold = start + LIMIT * 100
+
+  instance = LiquidityProvider(start, threshold)
 
   instance.get_wallets()
