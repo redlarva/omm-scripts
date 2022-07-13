@@ -6,7 +6,8 @@ JSON_FILE_LOCATION = config.get("JSON_FILE_LOCATION")
 ADDRESS = {
     'LENDING_POOL': 'cxcb455f26a2c01c686fa7f30e1e3661642dd53c0d',
     'OMM_TOKEN': 'cx1a29259a59f463a67bb2ef84398b30ca56b5830a',
-    'DATA_PROVIDER': 'cx5f9a6ca11b2b761a469965cedab40ada9e503cb5'
+    'DATA_PROVIDER': 'cx5f9a6ca11b2b761a469965cedab40ada9e503cb5',
+    'BOOSTED_OMM': 'cxeaff5a10cb72bf85965b8b4af3e708ab772b7921'
 }
 
 TOKENS = {
@@ -21,4 +22,5 @@ TOKENS = {
 US_PER_HR = 3600_000_000
 EXA = 10 ** 18
 GEOMETRY_LOG_API = 'https://tracker.icon.community/api/v1/logs'
+MAINNET_ENDPOINT = 'https://ctz.solidwallet.io/api/v3'
 GEOMETRY_TRANSACTION_DETAIL_API = 'https://tracker.icon.community/api/v1/transactions/details/'
