@@ -84,3 +84,10 @@ CREATE TABLE `bomm_stats`
     PRIMARY KEY (`user`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
+
+CREATE VIEW bomm_stats_view AS
+SELECT 
+from_unixtime(expire,'%Y %D %M') AS unlock_date,
+sum(amount) AS totalOMMLocked,
+count(user) AS numberOfUsers
+FROM bomm_stats GROUP BY expire ORDER by expire ASC;
