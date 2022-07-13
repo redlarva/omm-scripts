@@ -1,5 +1,4 @@
 import json
-import time
 import requests
 from helpers.mysql import connection
 import concurrent.futures
@@ -58,7 +57,6 @@ class BOMMAnalyticsData(object):
         params = {'_owner': user}
         payload = self.make_rpc_dict("getLocked", params)
         response = self.get_request(payload)
-        print(response)
         self.lockDetails.append([user, int(response.get("amount"), 16)/10**18, int(response.get("end"), 16)//1000_000])
     
     def all_user_details(self):
@@ -76,7 +74,6 @@ class BOMMAnalyticsData(object):
 
 
 if __name__ == "__main__": 
-    a = time.perf_counter()
     bomm = BOMMAnalyticsData()
     with connection:
         with connection.cursor() as cursor:
@@ -85,5 +82,3 @@ if __name__ == "__main__":
         bomm.fetch_user_list(0)
         bomm.save()
         connection.commit()
-    b = time.perf_counter()
-    print(f"Time required: {b-a}")
