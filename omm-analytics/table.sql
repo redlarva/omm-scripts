@@ -74,3 +74,13 @@ create table omm_utilization_rates(
   `utilization_rate` float NOT NULL, 
   primary key (`reserve`, `timestamp`) 
 );
+
+
+CREATE TABLE `bomm_stats`
+(
+    `user`         varchar(42) NOT NULL,
+    `amount`       float DEFAULT NULL,
+    `expire`      int(10) DEFAULT NULL,
+    PRIMARY KEY (`user`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
