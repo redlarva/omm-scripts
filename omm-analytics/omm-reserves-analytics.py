@@ -113,7 +113,7 @@ class OMMAnalyticsData(object):
 
     @retry(Exception, tries=20, delay=1, back_off=2)
     def _get_log_request(self, skip, method, score):
-        payload = {"skip": skip, "method": method, "limit": 100, "score_address": score}
+        payload = {"skip": skip, "method": method, "limit": 100, "address": score}
         req = requests.get(GEOMETRY_LOG_API, params=payload)
         return json.loads(req.text)
 
