@@ -1,7 +1,7 @@
 import json
 import requests
+from datetime import time
 from helpers.mysql import connection
-import concurrent.futures
 from helpers.logger import logger
 from checkscore.repeater import retry
 from helpers.constants import ADDRESS, MAINNET_ENDPOINT
@@ -13,57 +13,69 @@ SQL_INSERT_BOMM_STATS = (
     "VALUES (%s, %s, %s)"
 )
 
+SQL_INSERT_BOMM_USERS = (
+    "INSERT INTO bomm_users"
+    "(user, timestamp)"
+    "VALUES (%s, %s)"
+    "on DUPLICATE KEY "
+    "UPDATE user=VALUES('user'), timestamp=VALUES('timestamp)"
+)
+
 SQL_DROP_BOMM_STATS = ("TRUNCATE TABLE bomm_stats")
+
+SQL_DROP_BOMM_USERS= ("TRUNCATE TABLE bomm_users")
 
 class BOMMAnalyticsData(object):
     def __init__(self):
+        self.users =[]
         self.userList = []
         self.lockDetails = []
-    
+
     def make_rpc_dict(self, method: str, params) -> str:
         rpc_dict = {
-                'jsonrpc': '2.0',
-                'method': 'icx_call',
-                'id': 1234,
-                'params': {
-                    "from": "hx0000000000000000000000000000000000000000",
-                    "to": ADDRESS["BOOSTED_OMM"],  
-                    "dataType": "call",
-                    "data": {
-                        "method": f"{method}",
-                        "params": params
-                    }
+            'jsonrpc': '2.0',
+            'method': 'icx_call',
+            'id': 1234,
+            'params': {
+                "from": "hx0000000000000000000000000000000000000000",
+                "to": ADDRESS["BOOSTED_OMM"],
+                "dataType": "call",
+                "data": {
+                    "method": f"{method}",
+                    "params": params
+                }
             }
         }
         return json.dumps(rpc_dict)
-    
+
     @retry(Exception, tries=5, delay=1)
     def get_request(self, payload: str):
         r = requests.post(MAINNET_ENDPOINT, data=payload)
         return json.loads(r.text)['result']
-    
+
     def fetch_user_list(self, skip: int):
         params = {
-                "start": f'{skip}',
-                "end": f'{skip+100}',
-            }
+            "start": f'{skip}',
+            "end": f'{skip+100}',
+        }
         payload = self.make_rpc_dict("getUsers", params)
         data = self.get_request(payload)
         self.userList.extend(data)
         if len(data) == 100:
             self.fetch_user_list(skip+100)
-    
+
     def fetch_lock_details(self, user: str):
         params = {'_owner': user}
         payload = self.make_rpc_dict("getLocked", params)
         response = self.get_request(payload)
         self.lockDetails.append([user, int(response.get("amount"), 16)/10**18, int(response.get("end"), 16)//1000_000])
-    
+
     def all_user_details(self):
         for user in self.userList:
             self.fetch_lock_details(user)
+            self.users.append([user,int(time.time())])
 
-    def save(self):
+    def save_analytics(self):
         self.all_user_details()
         logger.info(f"... updating bOMM info ...")
         for detail in self.lockDetails:
@@ -72,13 +84,24 @@ class BOMMAnalyticsData(object):
             with connection.cursor() as cursor:
                 cursor.execute(SQL_INSERT_BOMM_STATS, _val)
 
+    def save_userList(self):
+        self.all_user_details()
+        logger.info(f"... updating bOMM user list ...")
+        for detail in self.userList:
+            _val = (detail[0],detail[1])
+            logger.info("%s,%s" %_val)
+            with connection.cursor() as cursor:
+                cursor.execute(SQL_INSERT_BOMM_USERS,_val)
 
-if __name__ == "__main__": 
+
+if __name__ == "__main__":
     bomm = BOMMAnalyticsData()
     with connection:
         with connection.cursor() as cursor:
             cursor.execute(SQL_DROP_BOMM_STATS)
+            cursor.execute(SQL_DROP_BOMM_USERS)
         bomm = BOMMAnalyticsData()
         bomm.fetch_user_list(0)
-        bomm.save()
+        bomm.save_analytics()
+        bomm.save_userList()
         connection.commit()
