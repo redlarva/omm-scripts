@@ -2,3 +2,5 @@
 *.json
 *.log
 __pycache__
+mariadb
+liquditiy-providres
