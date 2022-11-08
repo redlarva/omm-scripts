@@ -1,6 +1,5 @@
 import json
 import requests
-from datetime import time
 from helpers.mysql import connection
 from helpers.logger import logger
 from checkscore.repeater import retry
@@ -13,17 +12,12 @@ SQL_INSERT_BOMM_STATS = (
     "VALUES (%s, %s, %s)"
 )
 
-SQL_INSERT_BOMM_USERS = (
-    "INSERT IGNORE bomm_users"
-    "(user, timestamp)"
-    "VALUES (%s, %s)"
-)
+SQL_INSERT_BOMM_USERS = ("INSERT IGNORE bomm_users (user) VALUES (%s) ON DUPLICATE KEY UPDATE user=user;")
 
 SQL_DROP_BOMM_STATS = ("TRUNCATE TABLE bomm_stats")
 
 class BOMMAnalyticsData(object):
     def __init__(self):
-        self.users =[]
         self.userList = []
         self.lockDetails = []
 
@@ -69,7 +63,6 @@ class BOMMAnalyticsData(object):
     def all_user_details(self):
         for user in self.userList:
             self.fetch_lock_details(user)
-            self.users.append([user,int(time.time())])
 
     def save_analytics(self):
         self.all_user_details()
@@ -79,15 +72,8 @@ class BOMMAnalyticsData(object):
             logger.info("%s,%s,%s" % _val)
             with connection.cursor() as cursor:
                 cursor.execute(SQL_INSERT_BOMM_STATS, _val)
+                cursor.execute(SQL_INSERT_BOMM_USERS, (detail[0]))
 
-    def save_userList(self):
-        self.all_user_details()
-        logger.info(f"... updating bOMM user list ...")
-        for detail in self.userList:
-            _val = (detail[0],detail[1])
-            logger.info("%s,%s" %_val)
-            with connection.cursor() as cursor:
-                cursor.execute(SQL_INSERT_BOMM_USERS,_val)
 
 
 if __name__ == "__main__":
@@ -98,5 +84,4 @@ if __name__ == "__main__":
         bomm = BOMMAnalyticsData()
         bomm.fetch_user_list(0)
         bomm.save_analytics()
-        bomm.save_userList()
         connection.commit()
