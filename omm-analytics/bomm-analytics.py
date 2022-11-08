@@ -14,16 +14,12 @@ SQL_INSERT_BOMM_STATS = (
 )
 
 SQL_INSERT_BOMM_USERS = (
-    "INSERT INTO bomm_users"
+    "INSERT IGNORE bomm_users"
     "(user, timestamp)"
     "VALUES (%s, %s)"
-    "on DUPLICATE KEY "
-    "UPDATE user=VALUES('user'), timestamp=VALUES('timestamp)"
 )
 
 SQL_DROP_BOMM_STATS = ("TRUNCATE TABLE bomm_stats")
-
-SQL_DROP_BOMM_USERS= ("TRUNCATE TABLE bomm_users")
 
 class BOMMAnalyticsData(object):
     def __init__(self):
@@ -99,7 +95,6 @@ if __name__ == "__main__":
     with connection:
         with connection.cursor() as cursor:
             cursor.execute(SQL_DROP_BOMM_STATS)
-            cursor.execute(SQL_DROP_BOMM_USERS)
         bomm = BOMMAnalyticsData()
         bomm.fetch_user_list(0)
         bomm.save_analytics()
