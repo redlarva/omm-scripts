@@ -52,7 +52,7 @@ def get_stakers(skip):
         pass
 
 with concurrent.futures.ThreadPoolExecutor(max_workers=32) as executor:
-    executor.map(get_stakers, [i for i in range(0, UTPO, 100)])
+    executor.map(get_stakers, [i for i in range(0, UPTO, 100)])
 
 with open ('omm-stakers.json','w') as outfile:
     json.dump(stakers_list, outfile)

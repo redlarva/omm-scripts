@@ -9,6 +9,8 @@ import csv
 from iconsdk.builder.call_builder import CallBuilder
 from iconsdk.icon_service import IconService
 from iconsdk.providers.http_provider import HTTPProvider
+from concurrent.futures import wait
+from checkscore.repeater import retry
 
 sICX_RATE = 1068878173082825969
 EXA = 10 ** 18
@@ -60,10 +62,15 @@ class TokenSnapshot(object):
     self.icon_service = IconService(HTTPProvider(server_url, 3))
 
     self.addresses = addresses[f'{nid}']
+    self.total_ICX = 0
+    self.total_sICX = 0
+    self.principal_total_sICX = 0
+    self.principal_total_ICX = 0
 
   def _get_icx_balance(self, wallet):
     return self.icon_service.get_balance(wallet)
 
+  @retry(Exception, tries=10, delay=1, back_off=2)
   def _call_tx(self, contract, method, params):
     params = {} if params is None else params
     call = CallBuilder() \
@@ -75,24 +82,19 @@ class TokenSnapshot(object):
     response = self.icon_service.call(call)
     return response
 
-  def get_deposit_wallets(self):
-    batch_size = 50
-    index = 0
-    while batch_size == 50:
-      deposit_wallets = self._call_tx(self.addresses['LENDING_POOL'],
-                                      'getDepositWallets', {'_index': index})
-      self.wallets.extend(deposit_wallets)
-      index += 1
-      batch_size = len(deposit_wallets)
-    deposit_wallets = self._call_tx(self.addresses['LENDING_POOL'],
-                                    'getDepositWallets', {'_index': index})
+  def load_wallets(self):
+    with open('ICE-snapshot/oICX-holders.json', 'r') as f:
+      deposit_wallets = json.load(f)
     self.wallets.extend(deposit_wallets)
 
   def snapshot(self, _token):
     self.token = _token
+    # for wallet in self.wallets:
+    #   self._get_balances(wallet)
     with concurrent.futures.ThreadPoolExecutor(
         max_workers=min(32, os.cpu_count())) as executor:
       executor.map(self._get_balances, self.wallets)
+
     _data = self._get_data()
     _sum_ICX = 0
     _sum = 0
@@ -113,6 +115,10 @@ class TokenSnapshot(object):
       writer = csv.writer(f)
       writer.writerow(header)
       writer.writerows(self._get_csv_data())
+      writer.writerow([])
+      writer.writerow(
+          ["TOTAL", self.principal_total_sICX, self.principal_total_ICX,
+           self.total_sICX, self.total_ICX])
 
   def _get_balances(self, wallet):
     _token_address = self.addresses[self.token]
@@ -131,6 +137,10 @@ class TokenSnapshot(object):
         "balance": _csv_row[3],
         "balance_ICX": _csv_row[4],
       }
+      self.total_ICX += _csv_row[4]
+      self.total_sICX += _csv_row[3]
+      self.principal_total_ICX += _csv_row[2]
+      self.principal_total_sICX += _csv_row[1]
       self.data.append(_row)
       self.data_csv.append(_csv_row)
 
@@ -149,9 +159,8 @@ if __name__ == '__main__':
   before = time.perf_counter()
   instance = TokenSnapshot(nid)
 
-  instance.get_deposit_wallets()
+  instance.load_wallets()
   print(len(instance.wallets))
-  print(instance.wallets)
 
   after = time.perf_counter()
   print(f"The time taken to fetch wallets: {after - before} seconds")

@@ -52,8 +52,9 @@ class LiquidityProvider(object):
 
   def _fetch_wallets_reward(self, skip: int):
     _data = self._get_request(skip)
-
+    print(_data)
     for row in _data:
+      print(row)
       block_timestamp = int(row.get("block_timestamp"))
       self.has_threshold_reach = block_timestamp <= LP_ADDED_TIMESTAMP
       # print("block_timestamp", block_timestamp)
@@ -62,7 +63,7 @@ class LiquidityProvider(object):
       if indexed[2] in OMM_POOL_ADDRESSES:
         self.wallets.append(indexed[1])
 
-    if not self.has_threshold_reach and skip <= self.threshold and len(
+    if not self.has_threshold_reach and skip < self.threshold and len(
         _data) == 100:
       self._fetch_wallets_reward(skip + 100)
 
@@ -76,7 +77,7 @@ class LiquidityProvider(object):
 if __name__ == '__main__':
   args = argumentParser()
   start = args.start
-  threshold = start + LIMIT * 100
+  threshold = start + LIMIT * 50
 
   instance = LiquidityProvider(start, threshold)
 

@@ -5,10 +5,11 @@ from dotenv import dotenv_values
 config = dotenv_values(".env")
 log_file = config.get("log_file")
 
+print(log_file)
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-handler = TimedRotatingFileHandler(log_file,
+handler = TimedRotatingFileHandler("temp.log",
                                    when="d",
                                    interval=1,
                                    backupCount=7)
