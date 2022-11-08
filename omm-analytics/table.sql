@@ -85,6 +85,14 @@ CREATE TABLE `bomm_stats`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
 
+CREATE TABLE `bomm_users`
+(
+    `user`         varchar(42) NOT NULL,
+    `timestamp`    int(11) DEFAULT NULL
+    PRIMARY KEY (`user`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
+
 CREATE VIEW bomm_stats_view AS
 SELECT 
 from_unixtime(expire,'%Y %D %M') AS unlock_date,
