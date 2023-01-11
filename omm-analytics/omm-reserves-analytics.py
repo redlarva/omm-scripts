@@ -33,9 +33,9 @@ class ActiveUserData(object):
         super(ActiveUserData, self).__init__()
         self.data = {
             "deposit": {"sicx": [], "usds": [], "iusdc": [], "bnusd": [], "baln": [], "omm": []},
-            "borrow": {"sicx": [], "usds": [], "iusdc": [], "bnusd": [], "baln": []},
+            "borrow": {"sicx": [], "usds": [], "iusdc": [], "bnusd": [], "baln": [], "omm": []},
             "redeem": {"sicx": [], "usds": [], "iusdc": [], "bnusd": [], "baln": [], "omm": []},
-            "repay": {"sicx": [], "usds": [], "iusdc": [], "bnusd": [], "baln": []},
+            "repay": {"sicx": [], "usds": [], "iusdc": [], "bnusd": [], "baln": [], "omm": []},
         }
 
         self.amount = {
